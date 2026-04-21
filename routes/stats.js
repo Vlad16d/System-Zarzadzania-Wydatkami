@@ -1,0 +1,46 @@
+const express = require('express');
+const router = express.Router();
+const db = require('../db');
+
+
+// suma wydatkow (za miesiac)
+router.get('/monthly/:userId/:month', (req, res) => {
+    const { userId, month } = req.params;
+
+    db.get(
+        `SELECT SUM(amount) as total 
+         FROM Expenses 
+         WHERE user_id = ? AND substr(date, 1, 7) = ?`,
+        [userId, month],
+        (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            res.json({ total: row.total || 0 });
+        }
+    );
+});
+
+
+// cetegories wydatkow
+router.get('/by-category/:userId', (req, res) => {
+    const { userId } = req.params;
+
+    db.all(
+    `SELECT 
+        COALESCE(Categories.name, 'Без категории') as name,
+        SUM(Expenses.amount) as total
+     FROM Expenses
+     LEFT JOIN Categories ON Expenses.category_id = Categories.id
+     WHERE Expenses.user_id = ?
+     GROUP BY name`,
+    [userId],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            res.json(rows);
+        }
+    );
+});
+
+
+module.exports = router;
