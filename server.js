@@ -28,3 +28,6 @@ app.use('/categories', categoryRoutes);
 
 const statsRoutes = require('./routes/stats');
 app.use('/stats', statsRoutes);
+
+const budgetRoutes = require('./routes/budget');
+app.use('/budget', budgetRoutes);

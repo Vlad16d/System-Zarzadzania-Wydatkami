@@ -29,6 +29,15 @@ db.serialize(() => {
             user_id INTEGER
         )
     `);
+
+    db.run(`
+    CREATE TABLE IF NOT EXISTS Budgets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        month TEXT,
+        limit_amount REAL
+    )
+`);
 });
 
 module.exports = db;
