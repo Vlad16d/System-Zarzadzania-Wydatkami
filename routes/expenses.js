@@ -34,7 +34,12 @@ router.get('/user/:userId', (req, res) => {
     const { userId } = req.params;
 
     db.all(
-        `SELECT * FROM Expenses WHERE user_id = ? ORDER BY date DESC`,
+        `SELECT 
+            Expenses.*, 
+            Categories.name as category_name
+        FROM Expenses
+        LEFT JOIN Categories 
+        ON Expenses.category_id = Categories.id`,
         [userId],
         (err, rows) => {
             if (err) {

@@ -7,7 +7,7 @@ router.get('/:userId', (req, res) => {
     const { userId } = req.params;
 
     db.all(
-        `SELECT * FROM Categories WHERE user_id = ?`,
+        `SELECT * FROM Categories WHERE user_id IS NULL OR user_id = ?`,
         [userId],
         (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
@@ -23,13 +23,10 @@ router.post('/', (req, res) => {
     db.run(
         `INSERT INTO Categories (name, user_id) VALUES (?, ?)`,
         [name, user_id],
-        function (err) {
+        function(err) {
             if (err) return res.status(500).json({ error: err.message });
 
-            res.json({
-                message: 'Категория создана',
-                categoryId: this.lastID
-            });
+            res.json({ id: this.lastID });
         }
     );
 });
@@ -39,12 +36,12 @@ router.delete('/:id', (req, res) => {
     const { id } = req.params;
 
     db.run(
-        `DELETE FROM Categories WHERE id = ?`,
+        `DELETE FROM Categories WHERE id = ? AND user_id IS NOT NULL`,
         [id],
-        function (err) {
+        function(err) {
             if (err) return res.status(500).json({ error: err.message });
 
-            res.json({ message: 'Категория удалена' });
+            res.json({ message: 'Удалено' });
         }
     );
 });

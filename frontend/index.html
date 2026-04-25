@@ -69,6 +69,35 @@ tr {
     border-bottom: 1px solid #eee;
 }
 
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;          /* было 8 → стало компактнее */
+    font-size: 14px;         /* чуть меньше текст */
+    border-bottom: 1px solid #eee;
+}
+
+.delete-btn {
+/*    background: #ff7474;*/
+    background: #FFEFD5;
+/*    background: #ffe485; */
+    border: none;
+    color: white;
+    padding: 2px 6px;       /* было больше */
+    font-size: 12px;        /* меньше текст */
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background: #e60000;
+}
+
+#categoryList {
+    max-width: 300px;
+}
+
 </style>
 </head>
 
@@ -85,6 +114,15 @@ tr {
 <input id="desc" placeholder="Описание">
 <select id="category"></select>
 <button onclick="addExpense()">Добавить</button>
+</div>
+
+<div class="card">
+<h2>Категории</h2>
+
+<input id="newCategory" placeholder="Новая категория...">
+<button onclick="addCategory()">Добавить</button>
+
+<ul id="categoryList"></ul>
 </div>
 
 <div class="card">
@@ -105,6 +143,9 @@ tr {
 
 <div class="card">
 <h2>📊 Статистика</h2>
+<input type="month" id="month">
+<button onclick="loadMonthlyStats()">Показать за месяц</button>
+<p id="monthlyResult"></p>
 <canvas id="chart"></canvas>
 </div>
 
@@ -121,6 +162,7 @@ tr {
 
 const userId = 1;
 let chart;
+let categoryColors = {}; // 👈 добавили
 
 // ➕ добавить
 async function addExpense() {
@@ -181,15 +223,31 @@ async function loadExpenses() {
         const row = document.createElement('tr');
 
         row.innerHTML = `
-            <td>${e.date}</td>
-            <td style="max-width:200px; word-wrap:break-word;">${e.description}</td>
+            <td>
+                <span style="
+                    display:inline-block;
+                    width:10px;
+                    height:10px;
+                    background:${categoryColors[e.category_name] || '#ccc'};
+                    border-radius:50%;
+                    margin-right:6px;
+                "></span>
+                ${e.date}
+            </td>
+
+            <td style="max-width:200px; word-wrap:break-word;">
+                ${e.description}
+            </td>
+
             <td>${e.amount} zł</td>
+
             <td>
                 <button onclick="editExpense(${e.id})">✏️</button>
                 <button onclick="deleteExpense(${e.id})">❌</button>
             </td>
         `;
-
+        console.log("EXPENSE:", e);
+        
         list.appendChild(row);
     });
 }
@@ -204,17 +262,39 @@ async function deleteExpense(id) {
     loadBudget();
 }
 
-// 📊 график
+function generateColors(count) {
+    const colors = [];
+
+    for (let i = 0; i < count; i++) {
+        const hue = Math.floor(360 * i / count);
+        colors.push(`hsl(${hue}, 70%, 60%)`);
+    }
+
+    return colors;
+}
+
 async function loadChart() {
     const res = await fetch(`http://localhost:3000/stats/by-category/${userId}`);
     const data = await res.json();
 
-    const labels = data.map(d => d.name || 'Без категории');
-    const values = data.map(d => d.total);
+    console.log("CHART DATA:", data); // 👈 важно
 
-    if (chart) chart.destroy();
+    const labels = data.map(d => d.name);
+    const values = data.map(d => d.total);
+    
+
+    if (chart) {
+        chart.destroy();
+    }
 
     const ctx = document.getElementById('chart').getContext('2d');
+
+    const colors = generateColors(values.length);
+
+    categoryColors = {};
+    labels.forEach((label, index) => {
+        categoryColors[label] = colors[index];
+    });
 
     chart = new Chart(ctx, {
         type: 'pie',
@@ -222,19 +302,12 @@ async function loadChart() {
             labels: labels,
             datasets: [{
                 data: values,
-                backgroundColor: [
-                    '#ff6384',
-                    '#36a2eb',
-                    '#ffce56',
-                    '#4caf50',
-                    '#9966ff'
-                ]
+                backgroundColor: colors
             }]
         }
     });
 }
 
-// 💰 бюджет
 async function setBudget() {
     const limit = document.getElementById('budget').value;
  
@@ -272,14 +345,83 @@ async function loadCategories() {
     const data = await res.json();
 
     const select = document.getElementById('category');
+    const list = document.getElementById('categoryList');
+
     select.innerHTML = '';
+    list.innerHTML = '';
 
     data.forEach(c => {
+        // 👉 dropdown
         const option = document.createElement('option');
         option.value = c.id;
         option.text = c.name;
         select.appendChild(option);
+
+        // 👉 список категорий
+        const li = document.createElement('div');
+        li.className = 'category-item';
+
+        li.innerHTML = `
+            <span>${c.name}</span>
+            <button class="delete-btn" onclick="deleteCategory(${c.id})">🗑️</button>
+        `;
+        list.appendChild(li);
     });
+}
+
+async function loadMonthlyStats() {
+    const month = document.getElementById('month').value;
+
+    const res = await fetch(`http://localhost:3000/stats/monthly/${userId}/${month}`);
+    const data = await res.json();
+
+    document.getElementById('monthlyResult').innerText =
+        `За месяц: ${data.total} zł`;
+}
+
+async function loadMonthlyChart() {
+    const res = await fetch(`http://localhost:3000/stats/monthly-comparison/${userId}`);
+    const data = await res.json();
+
+    const labels = data.map(d => d.month);
+    const values = data.map(d => d.total);
+
+    if (chart) chart.destroy();
+
+    const ctx = document.getElementById('chart').getContext('2d');
+
+    chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values
+            }]
+        }
+    });
+}
+
+async function addCategory() {
+    const name = document.getElementById('newCategory').value;
+
+    await fetch('http://localhost:3000/categories', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            name: name,
+            user_id: userId
+        })
+    });
+
+    loadCategories();
+}
+
+async function deleteCategory(id) {
+    await fetch(`http://localhost:3000/categories/${id}`, {
+        method: 'DELETE'
+    });
+
+    loadCategories();
 }
 
 // автозагрузка

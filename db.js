@@ -38,6 +38,43 @@ db.serialize(() => {
         limit_amount REAL
     )
 `);
+
+db.serialize(() => {
+    db.run(`
+        CREATE TABLE IF NOT EXISTS Categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            user_id INTEGER
+        )
+    `);
+
+    // 👉 добавляем базовые категории ТОЛЬКО если их нет
+    const defaultCategories = [
+        "Jedzenie",
+        "Transport",
+        "Rozrywka",
+        "Zdrowie",
+        "Rachunki"
+    ];
+
+    defaultCategories.forEach(name => {
+        db.get(
+            `SELECT * FROM Categories WHERE name = ? AND user_id IS NULL`,
+            [name],
+            (err, row) => {
+                if (!row) {
+                    db.run(
+                        `INSERT INTO Categories (name, user_id) VALUES (?, NULL)`,
+                        [name]
+                    );
+                }
+            }
+        );
+    });
 });
+
+});
+
+db.run("DELETE FROM Categories");
 
 module.exports = db;
