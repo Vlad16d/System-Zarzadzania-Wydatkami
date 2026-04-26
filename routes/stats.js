@@ -20,11 +20,14 @@ router.get('/monthly/:userId/:month', (req, res) => {
     );
 });
 
+// 📊 расходы по месяцам
 router.get('/monthly-comparison/:userId', (req, res) => {
     const { userId } = req.params;
 
     db.all(
-        `SELECT substr(date, 1, 7) as month, SUM(amount) as total
+        `SELECT 
+            substr(date, 1, 7) as month,
+            SUM(amount) as total
          FROM Expenses
          WHERE user_id = ?
          GROUP BY month

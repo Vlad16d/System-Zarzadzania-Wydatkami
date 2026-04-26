@@ -75,6 +75,6 @@ db.serialize(() => {
 
 });
 
-db.run("DELETE FROM Categories");
+// db.run("DELETE FROM Expenses WHERE category_id IS NULL;");
 
 module.exports = db;

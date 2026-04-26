@@ -4,30 +4,33 @@ const db = require('../db');
 
 // add wydatek
 router.post('/', (req, res) => {
-    const { amount, date, category_id, description, user_id } = req.body;
 
-    if (!amount || !date || !user_id) {
-        return res.status(400).json({ error: 'Не хватает данных' });
+    const { amount, date, description, category_id, user_id } = req.body;
+
+    // ✅ ВАЛИДАЦИЯ
+    if (!amount || isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ error: "Неверная сумма" });
+    }
+
+    if (!date) {
+        return res.status(400).json({ error: "Дата обязательна" });
+    }
+
+    if (!description || !description.trim()) {
+        return res.status(400).json({ error: "Описание обязательно" });
     }
 
     db.run(
-        `INSERT INTO Expenses (amount, date, category_id, description, user_id)
+        `INSERT INTO Expenses (amount, date, description, category_id, user_id)
          VALUES (?, ?, ?, ?, ?)`,
-        [amount, date, category_id || null, description || '', user_id],
-        function (err) {
-            if (err) {
-                console.log(err);
-                return res.status(500).json({ error: 'Ошибка при добавлении' });
-            }
+        [amount, date, description, category_id, user_id],
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
 
-            res.json({
-                message: 'Расход добавлен',
-                id: this.lastID
-            });
+            res.json({ id: this.lastID });
         }
     );
 });
-
 
 // get wszystkie wydatki
 router.get('/user/:userId', (req, res) => {
@@ -39,7 +42,8 @@ router.get('/user/:userId', (req, res) => {
             Categories.name as category_name
         FROM Expenses
         LEFT JOIN Categories 
-        ON Expenses.category_id = Categories.id`,
+        ON Expenses.category_id = Categories.id
+        WHERE Expenses.user_id = ?`,
         [userId],
         (err, rows) => {
             if (err) {

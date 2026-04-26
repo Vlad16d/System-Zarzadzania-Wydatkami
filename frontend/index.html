@@ -109,7 +109,7 @@ tr {
 
 <div class="card">
 <h2>Добавить расход</h2>
-<input id="amount" placeholder="Сумма">
+<input id="amount" type="number" placeholder="Сумма" min="0" step="0.01">
 <input id="date" type="date">
 <input id="desc" placeholder="Описание">
 <select id="category"></select>
@@ -134,6 +134,7 @@ tr {
             <th>Дата</th>
             <th>Описание</th>
             <th>Сумма</th>
+            <th>Категория</th>
             <th>Действия</th>
         </tr>
     </thead>
@@ -143,6 +144,8 @@ tr {
 
 <div class="card">
 <h2>📊 Статистика</h2>
+<canvas id="chart"></canvas>
+<canvas id="monthlyChart" style="margin-top:20px"></canvas>
 <input type="month" id="month">
 <button onclick="loadMonthlyStats()">Показать за месяц</button>
 <p id="monthlyResult"></p>
@@ -162,53 +165,78 @@ tr {
 
 const userId = 1;
 let chart;
+let monthlyChart;
 let categoryColors = {}; // 👈 добавили
 
 // ➕ добавить
 async function addExpense() {
-    try {
-        const res = await fetch('http://localhost:3000/expenses', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                amount: document.getElementById('amount').value,
-                date: document.getElementById('date').value,
-                description: document.getElementById('desc').value,
-                category_id: document.getElementById('category')?.value || null,
-                user_id: userId
-            })
-        });
+    const amount = parseFloat(document.getElementById('amount').value);
+    const date = document.getElementById('date').value;
+    const desc = document.getElementById('desc').value;
 
-        const data = await res.json();
-        console.log(data);
-
-        loadExpenses();
-        loadChart();
-        loadCategories();
-
-    } catch (err) {
-        console.error(err);
+    // ❗ ВАЛИДАЦИЯ
+    if (isNaN(amount) || amount <= 0) {
+        alert("Введите корректную сумму");
+        return;
     }
+
+    if (!date) {
+        alert("Выберите дату");
+        return;
+    }
+
+    if (!desc.trim()) {
+        alert("Введите описание");
+        return;
+    }
+
+    await fetch('http://localhost:3000/expenses', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            amount: amount,
+            date: date,
+            description: desc,
+            category_id: document.getElementById('category').value,
+            user_id: userId
+        })
+    });
+    await loadChart();
+    loadMonthlyChart();
+
+    loadChart().then(() => loadExpenses());
 }
 
-async function editExpense(id) {
+async function editExpense(id, categoryId) {
     const newAmount = prompt("Новая сумма:");
     const newDesc = prompt("Новое описание:");
+
+    const amount = parseFloat(newAmount);
+
+    if (isNaN(amount) || amount <= 0) {
+        alert("Введите корректную сумму");
+        return;
+    }
+
+    if (!newDesc || !newDesc.trim()) {
+        alert("Введите описание");
+        return;
+    }
 
     await fetch(`http://localhost:3000/expenses/${id}`, {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-            amount: newAmount,
-            date: "2026-04-21",
+            amount: amount,
+            date: new Date().toISOString().split('T')[0],
             description: newDesc,
-            category_id: 1
+            category_id: categoryId // 👈 сохраняем!
         })
     });
 
+    await loadChart();
+    loadMonthlyChart();
     loadExpenses();
-    loadChart();
-    loadBudget();
 }
 
 // 📄 список
@@ -223,17 +251,7 @@ async function loadExpenses() {
         const row = document.createElement('tr');
 
         row.innerHTML = `
-            <td>
-                <span style="
-                    display:inline-block;
-                    width:10px;
-                    height:10px;
-                    background:${categoryColors[e.category_name] || '#ccc'};
-                    border-radius:50%;
-                    margin-right:6px;
-                "></span>
-                ${e.date}
-            </td>
+            <td>${e.date}</td>
 
             <td style="max-width:200px; word-wrap:break-word;">
                 ${e.description}
@@ -242,14 +260,28 @@ async function loadExpenses() {
             <td>${e.amount} zł</td>
 
             <td>
-                <button onclick="editExpense(${e.id})">✏️</button>
+                <div style="
+                    width:14px;
+                    height:14px;
+                    background:${categoryColors[e.category_name] || '#ccc'};
+                    border-radius:50%;
+                    margin:auto;
+                "></div>
+            </td>
+
+            <td>
+                <button onclick="editExpense(${e.id}, ${e.category_id})">✏️</button>
                 <button onclick="deleteExpense(${e.id})">❌</button>
             </td>
         `;
-        console.log("EXPENSE:", e);
-        
+        // console.log(e.category_name);
+        // console.log(categoryColors);
+
         list.appendChild(row);
     });
+
+    await loadChart();
+    loadMonthlyChart();
 }
 
 async function deleteExpense(id) {
@@ -258,7 +290,8 @@ async function deleteExpense(id) {
     });
 
     loadExpenses();
-    loadChart();
+    await loadChart();
+    loadMonthlyChart();
     loadBudget();
 }
 
@@ -295,6 +328,8 @@ async function loadChart() {
     labels.forEach((label, index) => {
         categoryColors[label] = colors[index];
     });
+
+    console.log("COLORS:", categoryColors);
 
     chart = new Chart(ctx, {
         type: 'pie',
@@ -424,9 +459,36 @@ async function deleteCategory(id) {
     loadCategories();
 }
 
+async function loadMonthlyChart() {
+    const res = await fetch(`http://localhost:3000/stats/monthly-comparison/${userId}`);
+    const data = await res.json();
+
+    const labels = data.map(d => d.month);
+    const values = data.map(d => d.total);
+
+    if (monthlyChart) {
+        monthlyChart.destroy();
+    }
+
+    const ctx = document.getElementById('monthlyChart').getContext('2d');
+
+    monthlyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Расходы по месяцам',
+                data: values
+            }]
+        }
+    });
+}
+
 // автозагрузка
-loadExpenses();
-loadChart();
+loadChart().then(() => {
+    loadExpenses();
+});
+
 loadBudget();
 loadCategories();
 
