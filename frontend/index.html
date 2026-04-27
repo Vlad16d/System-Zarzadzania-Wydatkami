@@ -98,10 +98,35 @@ tr {
     max-width: 300px;
 }
 
+.fade {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.fade.show {
+    opacity: 1;
+}
+
 </style>
 </head>
 
 <body>
+
+<div class="card" id="authBlock">
+    <h2>🔐 Вход / Регистрация</h2>
+
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Пароль">
+
+    <label>
+        <input type="checkbox" id="remember"> Запомнить меня
+    </label>
+
+    <br><br>
+
+    <button onclick="login()">Войти</button>
+    <button onclick="register()">Регистрация</button>
+</div>
 
 <div class="container">
 
@@ -149,7 +174,6 @@ tr {
 <input type="month" id="month">
 <button onclick="loadMonthlyStats()">Показать за месяц</button>
 <p id="monthlyResult"></p>
-<canvas id="chart"></canvas>
 </div>
 
 <div class="card">
@@ -159,11 +183,29 @@ tr {
 <p id="budgetInfo"></p>
 </div>
 
+<button id="logoutBtn" onclick="logout()" style="display:none;">
+    Выйти
+</button>
+
 </div>
 
 <script>
 
-const userId = 1;
+let userId = null;
+
+function getUserId() {
+    if (userId !== null) return userId;
+
+    const saved = localStorage.getItem('userId');
+
+    if (saved) {
+        userId = Number(saved);
+        return userId;
+    }
+
+    return null;
+}
+
 let chart;
 let monthlyChart;
 let categoryColors = {}; // 👈 добавили
@@ -198,16 +240,18 @@ async function addExpense() {
             date: date,
             description: desc,
             category_id: document.getElementById('category').value,
-            user_id: userId
+            user_id: getUserId()
         })
     });
+    await loadExpenses();
     await loadChart();
-    loadMonthlyChart();
-
-    loadChart().then(() => loadExpenses());
+    await loadBudget();
 }
 
 async function editExpense(id, categoryId) {
+
+    if (!getUserId()) return; // 👈 защита
+
     const newAmount = prompt("Новая сумма:");
     const newDesc = prompt("Новое описание:");
 
@@ -230,69 +274,66 @@ async function editExpense(id, categoryId) {
             amount: amount,
             date: new Date().toISOString().split('T')[0],
             description: newDesc,
-            category_id: categoryId // 👈 сохраняем!
+            category_id: categoryId,
+            user_id: getUserId()
         })
     });
 
+    await loadExpenses();
     await loadChart();
-    loadMonthlyChart();
-    loadExpenses();
 }
 
 // 📄 список
 async function loadExpenses() {
-    const res = await fetch(`http://localhost:3000/expenses/user/${userId}`);
-    const data = await res.json();
+    if (!getUserId()) return;
 
     const list = document.getElementById('list');
-    list.innerHTML = '';
 
-    data.forEach(e => {
-        const row = document.createElement('tr');
+    list.classList.remove('show'); // плавно скрываем
 
-        row.innerHTML = `
-            <td>${e.date}</td>
+    const res = await fetch(`http://localhost:3000/expenses/user/${getUserId()}`);
+    const data = await res.json();
 
-            <td style="max-width:200px; word-wrap:break-word;">
-                ${e.description}
-            </td>
+    setTimeout(() => {
+        list.innerHTML = '';
 
-            <td>${e.amount} zł</td>
+        data.forEach(e => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${e.date}</td>
+                <td style="max-width:200px; word-wrap:break-word;">${e.description}</td>
+                <td>${e.amount} zł</td>
+                <td>
+                    <div style="
+                        width:14px;
+                        height:14px;
+                        background:${categoryColors[e.category_name] || '#ccc'};
+                        border-radius:50%;
+                        margin:auto;
+                    "></div>
+                </td>
+                <td>
+                    <button onclick="editExpense(${e.id}, ${e.category_id})">✏️</button>
+                    <button onclick="deleteExpense(${e.id})">❌</button>
+                </td>
+            `;
+            // console.log(e.category_name);
+            // console.log(categoryColors);
 
-            <td>
-                <div style="
-                    width:14px;
-                    height:14px;
-                    background:${categoryColors[e.category_name] || '#ccc'};
-                    border-radius:50%;
-                    margin:auto;
-                "></div>
-            </td>
+            list.appendChild(row);
+        });
 
-            <td>
-                <button onclick="editExpense(${e.id}, ${e.category_id})">✏️</button>
-                <button onclick="deleteExpense(${e.id})">❌</button>
-            </td>
-        `;
-        // console.log(e.category_name);
-        // console.log(categoryColors);
-
-        list.appendChild(row);
-    });
-
-    await loadChart();
-    loadMonthlyChart();
+        list.classList.add('show'); // плавно показываем
+    }, 200);
 }
+
 
 async function deleteExpense(id) {
     await fetch(`http://localhost:3000/expenses/${id}`, {
         method: 'DELETE'
     });
-
-    loadExpenses();
+    await loadExpenses();
     await loadChart();
-    loadMonthlyChart();
-    loadBudget();
 }
 
 function generateColors(count) {
@@ -307,7 +348,9 @@ function generateColors(count) {
 }
 
 async function loadChart() {
-    const res = await fetch(`http://localhost:3000/stats/by-category/${userId}`);
+    if (!getUserId()) return;
+
+    const res = await fetch(`http://localhost:3000/stats/by-category/${getUserId()}`);
     const data = await res.json();
 
     console.log("CHART DATA:", data); // 👈 важно
@@ -344,23 +387,32 @@ async function loadChart() {
 }
 
 async function setBudget() {
+    if (!getUserId()) return; // 👈 ОБЯЗАТЕЛЬНО
+
     const limit = document.getElementById('budget').value;
- 
+
+    if (!limit || isNaN(limit) || limit <= 0) {
+        alert("Введите корректный лимит");
+        return;
+    }
+
     await fetch('http://localhost:3000/budget', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-            user_id: userId,
+            user_id: getUserId(),
             month: '2026-04',
             limit_amount: limit
         })
     });
 
-    loadBudget();
+    await loadBudget();
 }
 
 async function loadBudget() {
-    const res = await fetch(`http://localhost:3000/budget/${userId}/2026-04`);
+    if (!getUserId()) return;
+
+    const res = await fetch(`http://localhost:3000/budget/${getUserId()}/2026-04`);
     const data = await res.json();
 
     let text = `Осталось: ${data.remaining} zł`;
@@ -376,7 +428,9 @@ async function loadBudget() {
 }
 
 async function loadCategories() {
-    const res = await fetch(`http://localhost:3000/categories/${userId}`);
+    if (!getUserId()) return;
+
+    const res = await fetch(`http://localhost:3000/categories/${getUserId()}`);
     const data = await res.json();
 
     const select = document.getElementById('category');
@@ -405,38 +459,19 @@ async function loadCategories() {
 }
 
 async function loadMonthlyStats() {
+    if (!getUserId()) return;
+
     const month = document.getElementById('month').value;
 
-    const res = await fetch(`http://localhost:3000/stats/monthly/${userId}/${month}`);
+    const res = await fetch(`http://localhost:3000/stats/monthly/${getUserId()}/${month}`);
     const data = await res.json();
 
     document.getElementById('monthlyResult').innerText =
         `За месяц: ${data.total} zł`;
 }
 
-async function loadMonthlyChart() {
-    const res = await fetch(`http://localhost:3000/stats/monthly-comparison/${userId}`);
-    const data = await res.json();
-
-    const labels = data.map(d => d.month);
-    const values = data.map(d => d.total);
-
-    if (chart) chart.destroy();
-
-    const ctx = document.getElementById('chart').getContext('2d');
-
-    chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: values
-            }]
-        }
-    });
-}
-
 async function addCategory() {
+    if (!getUserId()) return;
     const name = document.getElementById('newCategory').value;
 
     await fetch('http://localhost:3000/categories', {
@@ -444,23 +479,29 @@ async function addCategory() {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             name: name,
-            user_id: userId
+            user_id: getUserId()
         })
     });
 
-    loadCategories();
+    await loadCategories();
+    await loadChart();
 }
 
 async function deleteCategory(id) {
+    if (!getUserId()) return;
+
     await fetch(`http://localhost:3000/categories/${id}`, {
         method: 'DELETE'
     });
 
-    loadCategories();
+    await loadCategories();
+    await loadChart();
 }
 
 async function loadMonthlyChart() {
-    const res = await fetch(`http://localhost:3000/stats/monthly-comparison/${userId}`);
+    if (!getUserId()) return;
+
+    const res = await fetch(`http://localhost:3000/stats/monthly-comparison/${getUserId()}`);
     const data = await res.json();
 
     const labels = data.map(d => d.month);
@@ -484,13 +525,79 @@ async function loadMonthlyChart() {
     });
 }
 
-// автозагрузка
-loadChart().then(() => {
-    loadExpenses();
-});
+async function register() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-loadBudget();
-loadCategories();
+    const res = await fetch('http://localhost:3000/auth/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (data.userId) {
+        userId = data.userId;
+        afterLogin();
+    } else {
+        alert(data.error);
+    }
+}
+
+async function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const remember = document.getElementById('remember').checked;
+
+    const res = await fetch('http://localhost:3000/auth/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (data.userId) {
+        userId = Number(data.userId);
+        localStorage.setItem('userId', userId);
+        afterLogin();
+    }
+}
+
+async function afterLogin() {
+    if (!getUserId()) return;
+
+    document.getElementById('authBlock').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'block';
+
+    await refreshAll();
+}
+
+function logout() {
+    localStorage.removeItem('userId');
+    location.reload();
+}
+
+async function refreshAll() {
+    if (!getUserId()) return;
+
+    await loadChart();
+    await loadMonthlyChart();
+    await loadExpenses();
+    await loadBudget();
+    await loadCategories();
+}
+
+const savedUser = localStorage.getItem('userId');
+
+if (savedUser) {
+    userId = Number(savedUser);
+    afterLogin();
+} else {
+    document.getElementById('authBlock').style.display = 'block';
+}
+
 
 </script>
 

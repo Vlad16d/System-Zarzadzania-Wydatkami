@@ -75,6 +75,14 @@ db.serialize(() => {
 
 });
 
+db.run(`
+CREATE TABLE IF NOT EXISTS Users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE,
+    password TEXT
+)
+`);
+
 // db.run("DELETE FROM Expenses WHERE category_id IS NULL;");
 
 module.exports = db;

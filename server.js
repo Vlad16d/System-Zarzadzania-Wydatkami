@@ -17,9 +17,6 @@ app.listen(PORT, () => {
     console.log(`Сервер запущен на http://localhost:${PORT}`);
 });
 
-const authRoutes = require('./routes/auth');
-app.use('/auth', authRoutes);
-
 const expenseRoutes = require('./routes/expenses');
 app.use('/expenses', expenseRoutes);
 
@@ -31,3 +28,6 @@ app.use('/stats', statsRoutes);
 
 const budgetRoutes = require('./routes/budget');
 app.use('/budget', budgetRoutes);
+
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);

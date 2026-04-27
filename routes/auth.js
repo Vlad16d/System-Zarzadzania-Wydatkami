@@ -2,23 +2,28 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// registration
+// регистрация
 router.post('/register', (req, res) => {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ error: "Введите email и пароль" });
+    }
 
     db.run(
         `INSERT INTO Users (email, password) VALUES (?, ?)`,
         [email, password],
-        function (err) {
+        function(err) {
             if (err) {
-                return res.status(400).json({ error: 'Пользователь уже существует' });
+                return res.status(400).json({ error: "Пользователь уже существует" });
             }
-            res.json({ message: 'Пользователь создан', userId: this.lastID });
+
+            res.json({ userId: this.lastID });
         }
     );
 });
 
-// login
+// логин
 router.post('/login', (req, res) => {
     const { email, password } = req.body;
 
@@ -29,10 +34,10 @@ router.post('/login', (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
 
             if (!user) {
-                return res.status(401).json({ error: 'Неверные данные' });
+                return res.status(401).json({ error: "Неверные данные" });
             }
 
-            res.json({ message: 'Успешный вход', user });
+            res.json({ userId: user.id });
         }
     );
 });
