@@ -281,7 +281,12 @@ let userId = null;
 function getUserId() {
     if (userId !== null) return userId;
 
-    const saved = localStorage.getItem('userId');
+    //const 
+    let saved = localStorage.getItem('userId');             // const zamiast let
+
+    if (!saved) {
+        saved = sessionStorage.getItem('userId');           // DODANE CALY IF
+    }
 
     if (saved) {
         userId = Number(saved);
@@ -614,6 +619,17 @@ async function register() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
+    // ✅ ВАЛИДАЦИЯ ДО ЗАПРОСА
+    if (!email || !email.includes('@')) {
+        alert("Введите корректный email");
+        return;
+    }
+
+    if (!password || password.length < 3) {
+        alert("Пароль слишком короткий");
+        return;
+    }
+
     const res = await fetch('http://localhost:3000/auth/register', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -622,12 +638,15 @@ async function register() {
 
     const data = await res.json();
 
-    if (data.userId) {
-        userId = data.userId;
-        afterLogin();
-    } else {
-        alert(data.error);
+    if (!res.ok) {
+        alert(data.error || "Ошибка регистрации");
+        return;
     }
+
+    userId = Number(data.userId);
+    localStorage.setItem('userId', userId);
+
+    afterLogin();
 }
 
 // async function login() {
@@ -653,6 +672,7 @@ async function register() {
 async function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const remember = document.getElementById('remember').checked;   // SPRAWDZIC POZNIEJ 
 
     const res = await fetch('http://localhost:3000/auth/login', {
         method: 'POST',
@@ -669,33 +689,64 @@ async function login() {
 
     userId = Number(data.userId);
 
-    // всегда сохраняем (как ты уже решил)
-    localStorage.setItem('userId', userId);
+    // localStorage.setItem('userId', userId);
+    if (remember) {
+        localStorage.setItem('userId', userId);
+        sessionStorage.removeItem('userId');                    // DODANE  CAŁY  IF
+    } else {
+        sessionStorage.setItem('userId', userId);
+        localStorage.removeItem('userId');
+    }
 
     afterLogin();
 }
 
-async function afterLogin() {
+// async function afterLogin() {
+//     document.getElementById('authWrapper').style.display = 'none';
+//     document.getElementById('authBlock').style.display = 'none';
+//     document.getElementById('appBlock').style.display = 'block';
+
+//     document.getElementById('logoutBtn').style.display = 'block';
+
+//     await loadExpenses();
+//     await loadChart();
+//     await loadMonthlyChart();
+//     await loadBudget();
+//     await loadCategories();
+// }
+
+// function logout() {
+//     localStorage.removeItem('userId');
+//     sessionStorage.removeItem('userId');                                // DODANE
+
+//     document.getElementById('appBlock').style.display = 'none'; 
+//     document.getElementById('authWrapper').style.display = 'flex';
+//     // document.getElementById('authBlock').style.display = 'block';        // BYLO
+
+//     document.getElementById('logoutBtn').style.display = 'none'; 
+// }
+
+function showAuth() {
+    document.getElementById('authWrapper').style.display = 'flex';
+    document.getElementById('appBlock').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
+}
+
+function showApp() {
     document.getElementById('authWrapper').style.display = 'none';
-    document.getElementById('authBlock').style.display = 'none';
     document.getElementById('appBlock').style.display = 'block';
-
     document.getElementById('logoutBtn').style.display = 'block';
-
-    await loadExpenses();
-    await loadChart();
-    await loadBudget();
-    await loadCategories();
 }
 
 function logout() {
+    userId = null;
     localStorage.removeItem('userId');
+    showAuth();
+}
 
-    document.getElementById('appBlock').style.display = 'none';
-    document.getElementById('authWrapper').style.display = 'flex';
-    document.getElementById('authBlock').style.display = 'block';
-
-    document.getElementById('logoutBtn').style.display = 'none'; 
+async function afterLogin() {
+    showApp();
+    await refreshAll();
 }
 
 async function refreshAll() {
@@ -708,7 +759,18 @@ async function refreshAll() {
     await loadCategories();
 }
 
-const savedUser = localStorage.getItem('userId');
+// const savedUser = localStorage.getItem('userId');                        BYLO
+const savedUser =                                                         // STAŁO
+    localStorage.getItem('userId') ||
+    sessionStorage.getItem('userId');
+
+if (savedUser) {
+    userId = Number(savedUser);
+    afterLogin();
+} else {
+    document.getElementById('authWrapper').style.display = 'flex';
+    document.getElementById('appBlock').style.display = 'none';
+}
 
 if (savedUser) {
     userId = Number(savedUser);

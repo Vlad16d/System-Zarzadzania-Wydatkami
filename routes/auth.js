@@ -6,21 +6,14 @@ const db = require('../db');
 router.post('/register', (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ error: "Введите email и пароль" });
+    if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: "Введите корректный email" });
     }
 
-    db.run(
-        `INSERT INTO Users (email, password) VALUES (?, ?)`,
-        [email, password],
-        function(err) {
-            if (err) {
-                return res.status(400).json({ error: "Пользователь уже существует" });
-            }
+    if (!password || password.length < 3) {
+        return res.status(400).json({ error: "Пароль слишком короткий" });
+    }
 
-            res.json({ userId: this.lastID });
-        }
-    );
 });
 
 // логин
