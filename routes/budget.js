@@ -12,18 +12,18 @@ router.post('/', (req, res) => {
         [user_id, month],
         (err, row) => {
             if (row) {
-                // ОБНОВЛЯЕМ
+                // refresh
                 db.run(
                     `UPDATE Budgets SET limit_amount = ? WHERE user_id = ? AND month = ?`,
                     [limit_amount, user_id, month],
-                    () => res.json({ message: 'Бюджет обновлён' })
+                    () => res.json({ message: 'Budget aktualizowany' })
                 );
             } else {
-                // СОЗДАЁМ
+                // create
                 db.run(
                     `INSERT INTO Budgets (user_id, month, limit_amount) VALUES (?, ?, ?)`,
                     [user_id, month, limit_amount],
-                    () => res.json({ message: 'Бюджет создан' })
+                    () => res.json({ message: 'Budget stworzony' })
                 );
             }
         }
@@ -43,7 +43,7 @@ router.get('/:userId/:month', (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
 
             if (!budget) {
-                return res.json({ message: 'Бюджет не установлен' });
+                return res.json({ message: 'Budget nie jest ustawiony' });
             }
 
             // przeliczamy wydatki

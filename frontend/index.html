@@ -73,8 +73,8 @@ tr {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 0;          /* было 8 → стало компактнее */
-    font-size: 14px;         /* чуть меньше текст */
+    padding: 4px 0;
+    font-size: 14px;
     border-bottom: 1px solid #eee;
 }
 
@@ -84,8 +84,8 @@ tr {
 /*    background: #ffe485; */
     border: none;
     color: white;
-    padding: 2px 6px;       /* было больше */
-    font-size: 12px;        /* меньше текст */
+    padding: 2px 6px;
+    font-size: 12px;
     border-radius: 4px;
     cursor: pointer;
 }
@@ -113,20 +113,6 @@ tr {
     right: 20px;
     background: #ff5c5c;
 }
-
-/* #authWrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, #667eea, #764ba2); 
-    background: linear-gradient(135deg, #1f1c2c, #928dab);
-} */
 
 #authWrapper {
     position: fixed;
@@ -195,19 +181,19 @@ tr {
 <div id="authWrapper">
     <h1 id="appTitle">💸 Expense Tracker</h1>
     <div class="card" id="authBlock">
-        <h2>🔐 Вход / Регистрация</h2>
+        <h2>🔐 Login / Registration</h2>
 
         <input id="email" placeholder="Email">
-        <input id="password" type="password" placeholder="Пароль">
+        <input id="password" type="password" placeholder="Hasło">
 
         <label>
-            <input type="checkbox" id="remember"> Запомнить меня
+            <input type="checkbox" id="remember"> Zapamiętaj mnie
         </label>
 
         <br><br>
 
-        <button onclick="login()">Войти</button>
-        <button onclick="register()">Регистрация</button>
+        <button onclick="login()">Logowanie</button>
+        <button onclick="register()">Rejestracja</button>
     </div>
 </div>
 
@@ -217,34 +203,34 @@ tr {
     <h1>💸 Expense Tracker</h1>
 
     <div class="card">
-    <h2>Добавить расход</h2>
-    <input id="amount" type="number" placeholder="Сумма" min="0" step="0.01">
+    <h2>Dodaj wydatek</h2>
+    <input id="amount" type="number" placeholder="Suma" min="0" step="0.01">
     <input id="date" type="date">
-    <input id="desc" placeholder="Описание">
+    <input id="desc" placeholder="Opis">
     <select id="category"></select>
-    <button onclick="addExpense()">Добавить</button>
+    <button onclick="addExpense()">Dodaj</button>
     </div>
 
     <div class="card">
-    <h2>Категории</h2>
+    <h2>Kategorie</h2>
 
-    <input id="newCategory" placeholder="Новая категория...">
-    <button onclick="addCategory()">Добавить</button>
+    <input id="newCategory" placeholder="Nowa kategoria...">
+    <button onclick="addCategory()">Dodaj</button>
 
     <ul id="categoryList"></ul>
     </div>
 
     <div class="card">
-    <h2>Список расходов</h2>
-    <button onclick="loadExpenses()">Обновить</button>
+    <h2>Spis wydatków</h2>
+    <button onclick="loadExpenses()">Refresh</button>
     <table border="1" width="100%" id="table">
         <thead>
             <tr>
-                <th>Дата</th>
-                <th>Описание</th>
-                <th>Сумма</th>
-                <th>Категория</th>
-                <th>Действия</th>
+                <th>Data</th>
+                <th>Opis</th>
+                <th>Suma</th>
+                <th>Kategoria</th>
+                <th>Działania</th>
             </tr>
         </thead>
         <tbody id="list"></tbody>
@@ -252,23 +238,23 @@ tr {
     </div>
 
     <div class="card">
-    <h2>📊 Статистика</h2>
+    <h2>📊 Statystyki</h2>
     <canvas id="chart"></canvas>
     <canvas id="monthlyChart" style="margin-top:20px"></canvas>
     <input type="month" id="month">
-    <button onclick="loadMonthlyStats()">Показать за месяц</button>
+    <button onclick="loadMonthlyStats()">Pokaż za miesiąc</button>
     <p id="monthlyResult"></p>
     </div>
 
     <div class="card">
-    <h2>💰 Бюджет</h2>
-    <input id="budget" placeholder="Лимит">
-    <button onclick="setBudget()">Установить</button>
+    <h2>💰 Budget</h2>
+    <input id="budget" placeholder="Limit">
+    <button onclick="setBudget()">Ustaw</button>
     <p id="budgetInfo"></p>
     </div>
 
     <button id="logoutBtn" onclick="logout()" style="display:none;">
-        Выйти
+        Wyjście
     </button>
 
     </div>
@@ -281,11 +267,10 @@ let userId = null;
 function getUserId() {
     if (userId !== null) return userId;
 
-    //const 
-    let saved = localStorage.getItem('userId');             // const zamiast let
+    let saved = localStorage.getItem('userId');
 
     if (!saved) {
-        saved = sessionStorage.getItem('userId');           // DODANE CALY IF
+        saved = sessionStorage.getItem('userId');
     }
 
     if (saved) {
@@ -298,27 +283,25 @@ function getUserId() {
 
 let chart;
 let monthlyChart;
-let categoryColors = {}; // 👈 добавили
+let categoryColors = {}; 
 
-// ➕ добавить
 async function addExpense() {
     const amount = parseFloat(document.getElementById('amount').value);
     const date = document.getElementById('date').value;
     const desc = document.getElementById('desc').value;
 
-    // ❗ ВАЛИДАЦИЯ
     if (isNaN(amount) || amount <= 0) {
-        alert("Введите корректную сумму");
+        alert("Wprowadż prawidłową kwotę");
         return;
     }
 
     if (!date) {
-        alert("Выберите дату");
+        alert("Wybierz datę");
         return;
     }
 
     if (!desc.trim()) {
-        alert("Введите описание");
+        alert("Wpisz opis");
         return;
     }
 
@@ -340,20 +323,20 @@ async function addExpense() {
 
 async function editExpense(id, categoryId) {
 
-    if (!getUserId()) return; // 👈 защита
+    if (!getUserId()) return; 
 
-    const newAmount = prompt("Новая сумма:");
-    const newDesc = prompt("Новое описание:");
+    const newAmount = prompt("Nowa kwota:");
+    const newDesc = prompt("Nowy opis:");
 
     const amount = parseFloat(newAmount);
 
     if (isNaN(amount) || amount <= 0) {
-        alert("Введите корректную сумму");
+        alert("Wpisz poprawną kwotę");
         return;
     }
 
     if (!newDesc || !newDesc.trim()) {
-        alert("Введите описание");
+        alert("Wprowadż opis");
         return;
     }
 
@@ -373,13 +356,12 @@ async function editExpense(id, categoryId) {
     await loadChart();
 }
 
-// 📄 список
 async function loadExpenses() {
     if (!getUserId()) return;
 
     const list = document.getElementById('list');
 
-    list.classList.remove('show'); // плавно скрываем
+    list.classList.remove('show'); 
 
     const res = await fetch(`http://localhost:3000/expenses/user/${getUserId()}`);
     const data = await res.json();
@@ -413,7 +395,7 @@ async function loadExpenses() {
             list.appendChild(row);
         });
 
-        list.classList.add('show'); // плавно показываем
+        list.classList.add('show');
     }, 200);
 }
 
@@ -443,7 +425,7 @@ async function loadChart() {
     const res = await fetch(`http://localhost:3000/stats/by-category/${getUserId()}`);
     const data = await res.json();
 
-    console.log("CHART DATA:", data); // 👈 важно
+    console.log("CHART DATA:", data); 
 
     const labels = data.map(d => d.name);
     const values = data.map(d => d.total);
@@ -477,12 +459,12 @@ async function loadChart() {
 }
 
 async function setBudget() {
-    if (!getUserId()) return; // 👈 ОБЯЗАТЕЛЬНО
+    if (!getUserId()) return; 
 
     const limit = document.getElementById('budget').value;
 
     if (!limit || isNaN(limit) || limit <= 0) {
-        alert("Введите корректный лимит");
+        alert("Wprowadż proszę prawidłowy limit");
         return;
     }
 
@@ -505,10 +487,10 @@ async function loadBudget() {
     const res = await fetch(`http://localhost:3000/budget/${getUserId()}/2026-04`);
     const data = await res.json();
 
-    let text = `Осталось: ${data.remaining} zł`;
+    let text = `Zostało: ${data.remaining} zł`;
 
     if (data.exceeded) {
-        text += " ⚠️ Ты превысил бюджет!";
+        text += " ⚠️ Budget przekroczony!";
         document.getElementById('budgetInfo').style.color = 'red';
     } else {
         document.getElementById('budgetInfo').style.color = 'green';
@@ -530,13 +512,11 @@ async function loadCategories() {
     list.innerHTML = '';
 
     data.forEach(c => {
-        // 👉 dropdown
         const option = document.createElement('option');
         option.value = c.id;
         option.text = c.name;
         select.appendChild(option);
 
-        // 👉 список категорий
         const li = document.createElement('div');
         li.className = 'category-item';
 
@@ -557,7 +537,7 @@ async function loadMonthlyStats() {
     const data = await res.json();
 
     document.getElementById('monthlyResult').innerText =
-        `За месяц: ${data.total} zł`;
+        `Za miesiąc: ${data.total} zł`;
 }
 
 async function addCategory() {
@@ -608,7 +588,7 @@ async function loadMonthlyChart() {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Расходы по месяцам',
+                label: 'Wydatki według miesiąca',
                 data: values
             }]
         }
@@ -619,14 +599,13 @@ async function register() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
-    // ✅ ВАЛИДАЦИЯ ДО ЗАПРОСА
     if (!email || !email.includes('@')) {
-        alert("Введите корректный email");
+        alert("Wprowadż pproszę prawidłowy email");
         return;
     }
 
     if (!password || password.length < 3) {
-        alert("Пароль слишком короткий");
+        alert("Hasło za  krótkie");
         return;
     }
 
@@ -639,7 +618,7 @@ async function register() {
     const data = await res.json();
 
     if (!res.ok) {
-        alert(data.error || "Ошибка регистрации");
+        alert(data.error || "Bład rejestracji");
         return;
     }
 
@@ -649,30 +628,10 @@ async function register() {
     afterLogin();
 }
 
-// async function login() {
-//     const email = document.getElementById('email').value;
-//     const password = document.getElementById('password').value;
-//     const remember = document.getElementById('remember').checked;
-
-//     const res = await fetch('http://localhost:3000/auth/login', {
-//         method: 'POST',
-//         headers: {'Content-Type': 'application/json'},
-//         body: JSON.stringify({ email, password })
-//     });
-
-//     const data = await res.json();
-
-//     if (data.userId) {
-//         userId = Number(data.userId);
-//         localStorage.setItem('userId', userId);
-//         afterLogin();
-//     }
-// }
-
 async function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const remember = document.getElementById('remember').checked;   // SPRAWDZIC POZNIEJ 
+    const remember = document.getElementById('remember').checked;   
 
     const res = await fetch('http://localhost:3000/auth/login', {
         method: 'POST',
@@ -683,16 +642,15 @@ async function login() {
     const data = await res.json();
 
     if (!res.ok) {
-        alert(data.error || "Ошибка входа");
+        alert(data.error || "Bład wejścia");
         return;
     }
 
     userId = Number(data.userId);
 
-    // localStorage.setItem('userId', userId);
     if (remember) {
         localStorage.setItem('userId', userId);
-        sessionStorage.removeItem('userId');                    // DODANE  CAŁY  IF
+        sessionStorage.removeItem('userId');                    
     } else {
         sessionStorage.setItem('userId', userId);
         localStorage.removeItem('userId');
@@ -700,31 +658,6 @@ async function login() {
 
     afterLogin();
 }
-
-// async function afterLogin() {
-//     document.getElementById('authWrapper').style.display = 'none';
-//     document.getElementById('authBlock').style.display = 'none';
-//     document.getElementById('appBlock').style.display = 'block';
-
-//     document.getElementById('logoutBtn').style.display = 'block';
-
-//     await loadExpenses();
-//     await loadChart();
-//     await loadMonthlyChart();
-//     await loadBudget();
-//     await loadCategories();
-// }
-
-// function logout() {
-//     localStorage.removeItem('userId');
-//     sessionStorage.removeItem('userId');                                // DODANE
-
-//     document.getElementById('appBlock').style.display = 'none'; 
-//     document.getElementById('authWrapper').style.display = 'flex';
-//     // document.getElementById('authBlock').style.display = 'block';        // BYLO
-
-//     document.getElementById('logoutBtn').style.display = 'none'; 
-// }
 
 function showAuth() {
     document.getElementById('authWrapper').style.display = 'flex';
@@ -759,8 +692,8 @@ async function refreshAll() {
     await loadCategories();
 }
 
-// const savedUser = localStorage.getItem('userId');                        BYLO
-const savedUser =                                                         // STAŁO
+// const savedUser = localStorage.getItem('userId');
+const savedUser =                                                         
     localStorage.getItem('userId') ||
     sessionStorage.getItem('userId');
 
@@ -779,7 +712,6 @@ if (savedUser) {
     document.getElementById('authBlock').style.display = 'block';
     document.getElementById('appBlock').style.display = 'none';
 }
-
 
 </script>
 

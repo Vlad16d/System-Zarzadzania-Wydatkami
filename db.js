@@ -48,7 +48,6 @@ db.serialize(() => {
         )
     `);
 
-    // 👉 добавляем базовые категории ТОЛЬКО если их нет
     const defaultCategories = [
         "Jedzenie",
         "Transport",

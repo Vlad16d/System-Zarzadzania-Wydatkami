@@ -7,17 +7,16 @@ router.post('/', (req, res) => {
 
     const { amount, date, description, category_id, user_id } = req.body;
 
-    // ✅ ВАЛИДАЦИЯ
     if (!amount || isNaN(amount) || amount <= 0) {
-        return res.status(400).json({ error: "Неверная сумма" });
+        return res.status(400).json({ error: "Nieprawidłowa suma" });
     }
 
     if (!date) {
-        return res.status(400).json({ error: "Дата обязательна" });
+        return res.status(400).json({ error: "Data obowiązkowa" });
     }
 
     if (!description || !description.trim()) {
-        return res.status(400).json({ error: "Описание обязательно" });
+        return res.status(400).json({ error: "Opis obowiązkowy" });
     }
 
     db.run(
@@ -48,7 +47,7 @@ router.get('/user/:userId', (req, res) => {
         (err, rows) => {
             if (err) {
                 console.log(err);
-                return res.status(500).json({ error: 'Ошибка при получении' });
+                return res.status(500).json({ error: 'Błąd otrzymania' });
             }
 
             res.json(rows);
@@ -67,16 +66,16 @@ router.delete('/:id', (req, res) => {
         function (err) {
             if (err) {
                 console.log(err);
-                return res.status(500).json({ error: 'Ошибка при удалении' });
+                return res.status(500).json({ error: 'Błąd usunięcia' });
             }
 
-            res.json({ message: 'Удалено' });
+            res.json({ message: 'Usunięto wydatek' });
         }
     );
 });
 
 
-// refresh   wydatki
+// refres  wydatki
 router.put('/:id', (req, res) => {
     const { id } = req.params;
     const { amount, date, category_id, description } = req.body;
@@ -89,10 +88,10 @@ router.put('/:id', (req, res) => {
         function (err) {
             if (err) {
                 console.log(err);
-                return res.status(500).json({ error: 'Ошибка при обновлении' });
+                return res.status(500).json({ error: 'Błąd aktualizacj' });
             }
 
-            res.json({ message: 'Обновлено' });
+            res.json({ message: 'Aktualizowano wydatki' });
         }
     );
 });

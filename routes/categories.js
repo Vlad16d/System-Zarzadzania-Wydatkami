@@ -41,7 +41,7 @@ router.delete('/:id', (req, res) => {
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
 
-            res.json({ message: 'Удалено' });
+            res.json({ message: 'Usunięta kategoria' });
         }
     );
 });

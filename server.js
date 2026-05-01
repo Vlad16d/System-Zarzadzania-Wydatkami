@@ -12,9 +12,9 @@ app.get('/', (req, res) => {
     res.send('API działa 🚀');
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Сервер запущен на http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
 
 const expenseRoutes = require('./routes/expenses');

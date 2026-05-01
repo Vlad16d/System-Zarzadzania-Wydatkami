@@ -20,7 +20,7 @@ router.get('/monthly/:userId/:month', (req, res) => {
     );
 });
 
-// 📊 расходы по месяцам
+// wydatki wedlug miesiaca
 router.get('/monthly-comparison/:userId', (req, res) => {
     const { userId } = req.params;
 
