@@ -37,31 +37,30 @@ router.get('/:userId/:month', (req, res) => {
 
     // limit
     db.get(
-        `SELECT limit_amount FROM Budgets WHERE user_id = ? AND month = ?`,
+        `SELECT limit_amount FROM Budgets 
+         WHERE user_id = ? AND month = ?`,
         [userId, month],
-        (err, budget) => {
+        (err, budgetRow) => {
             if (err) return res.status(500).json({ error: err.message });
 
-            if (!budget) {
-                return res.json({ message: 'Budget nie jest ustawiony' });
+            if (!budgetRow) {
+                return res.json({ remaining: null });
             }
 
-            // przeliczamy wydatki
+            // wydatki
             db.get(
                 `SELECT SUM(amount) as total 
                  FROM Expenses 
-                 WHERE user_id = ? AND substr(date, 1, 7) = ?`,
+                 WHERE user_id = ? AND substr(date,1,7) = ?`,
                 [userId, month],
-                (err, result) => {
+                (err, expenseRow) => {
                     if (err) return res.status(500).json({ error: err.message });
 
-                    const total = result.total || 0;
-                    const remaining = budget.limit_amount - total;
+                    const total = expenseRow.total || 0;
+                    const remaining = budgetRow.limit_amount - total;
 
                     res.json({
-                        limit: budget.limit_amount,
-                        spent: total,
-                        remaining: remaining,
+                        remaining,
                         exceeded: remaining < 0
                     });
                 }

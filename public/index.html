@@ -318,6 +318,7 @@ async function addExpense() {
     });
     await loadExpenses();
     await loadChart();
+    await loadMonthlyChart();
     await loadBudget();
 }
 
@@ -354,6 +355,7 @@ async function editExpense(id, categoryId) {
 
     await loadExpenses();
     await loadChart();
+    await loadMonthlyChart();
 }
 
 async function loadExpenses() {
@@ -406,6 +408,7 @@ async function deleteExpense(id) {
     });
     await loadExpenses();
     await loadChart();
+    await loadMonthlyChart();
 }
 
 function generateColors(count) {
@@ -486,6 +489,11 @@ async function loadBudget() {
 
     const res = await fetch(`/budget/${getUserId()}/2026-04`);
     const data = await res.json();
+
+    if (data.remaining === null) {
+        document.getElementById('budgetInfo').innerText = '';
+        return;
+    }
 
     let text = `Zostało: ${data.remaining} zł`;
 
