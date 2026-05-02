@@ -305,7 +305,7 @@ async function addExpense() {
         return;
     }
 
-    await fetch('http://localhost:3000/expenses', {
+    await fetch('/expenses', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -340,7 +340,7 @@ async function editExpense(id, categoryId) {
         return;
     }
 
-    await fetch(`http://localhost:3000/expenses/${id}`, {
+    await fetch(`/expenses/${id}`, {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -363,7 +363,7 @@ async function loadExpenses() {
 
     list.classList.remove('show'); 
 
-    const res = await fetch(`http://localhost:3000/expenses/user/${getUserId()}`);
+    const res = await fetch(`/expenses/user/${getUserId()}`);
     const data = await res.json();
 
     setTimeout(() => {
@@ -401,7 +401,7 @@ async function loadExpenses() {
 
 
 async function deleteExpense(id) {
-    await fetch(`http://localhost:3000/expenses/${id}`, {
+    await fetch(`/expenses/${id}`, {
         method: 'DELETE'
     });
     await loadExpenses();
@@ -422,7 +422,7 @@ function generateColors(count) {
 async function loadChart() {
     if (!getUserId()) return;
 
-    const res = await fetch(`http://localhost:3000/stats/by-category/${getUserId()}`);
+    const res = await fetch(`/stats/by-category/${getUserId()}`);
     const data = await res.json();
 
     console.log("CHART DATA:", data); 
@@ -468,7 +468,7 @@ async function setBudget() {
         return;
     }
 
-    await fetch('http://localhost:3000/budget', {
+    await fetch('/budget', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -484,7 +484,7 @@ async function setBudget() {
 async function loadBudget() {
     if (!getUserId()) return;
 
-    const res = await fetch(`http://localhost:3000/budget/${getUserId()}/2026-04`);
+    const res = await fetch(`/budget/${getUserId()}/2026-04`);
     const data = await res.json();
 
     let text = `Zostało: ${data.remaining} zł`;
@@ -502,7 +502,7 @@ async function loadBudget() {
 async function loadCategories() {
     if (!getUserId()) return;
 
-    const res = await fetch(`http://localhost:3000/categories/${getUserId()}`);
+    const res = await fetch(`/categories/${getUserId()}`);
     const data = await res.json();
 
     const select = document.getElementById('category');
@@ -533,7 +533,7 @@ async function loadMonthlyStats() {
 
     const month = document.getElementById('month').value;
 
-    const res = await fetch(`http://localhost:3000/stats/monthly/${getUserId()}/${month}`);
+    const res = await fetch(`/stats/monthly/${getUserId()}/${month}`);
     const data = await res.json();
 
     document.getElementById('monthlyResult').innerText =
@@ -544,7 +544,7 @@ async function addCategory() {
     if (!getUserId()) return;
     const name = document.getElementById('newCategory').value;
 
-    await fetch('http://localhost:3000/categories', {
+    await fetch('/categories', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -560,7 +560,7 @@ async function addCategory() {
 async function deleteCategory(id) {
     if (!getUserId()) return;
 
-    await fetch(`http://localhost:3000/categories/${id}`, {
+    await fetch(`/categories/${id}`, {
         method: 'DELETE'
     });
 
@@ -571,7 +571,7 @@ async function deleteCategory(id) {
 async function loadMonthlyChart() {
     if (!getUserId()) return;
 
-    const res = await fetch(`http://localhost:3000/stats/monthly-comparison/${getUserId()}`);
+    const res = await fetch(`/stats/monthly-comparison/${getUserId()}`);
     const data = await res.json();
 
     const labels = data.map(d => d.month);
@@ -609,7 +609,7 @@ async function register() {
         return;
     }
 
-    const res = await fetch('http://localhost:3000/auth/register', {
+    const res = await fetch('/auth/register', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ email, password })
@@ -633,7 +633,7 @@ async function login() {
     const password = document.getElementById('password').value;
     const remember = document.getElementById('remember').checked;   
 
-    const res = await fetch('http://localhost:3000/auth/login', {
+    const res = await fetch('/auth/login', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ email, password })
