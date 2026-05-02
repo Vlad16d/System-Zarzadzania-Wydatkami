@@ -14,6 +14,28 @@ router.post('/register', (req, res) => {
         return res.status(400).json({ error: "Hasło za krótkie" });
     }
 
+    db.get(
+        `SELECT * FROM Users WHERE email = ?`,
+        [email],
+        (err, existingUser) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            if (existingUser) {
+                return res.status(400).json({ error: "Użytkownik już istnieje" });
+            }
+
+            db.run(
+                `INSERT INTO Users (email, password) VALUES (?, ?)`,
+                [email, password],
+                function (err) {
+                    if (err) return res.status(500).json({ error: err.message });
+
+                    res.json({ userId: this.lastID });
+                }
+            );
+        }
+    );
+    console.log("REGISTER OK:", email);
 });
 
 // login
