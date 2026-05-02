@@ -9,7 +9,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
-    res.send('API działa 🚀');
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
@@ -31,3 +31,7 @@ app.use('/budget', budgetRoutes);
 
 const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
+
+const path = require('path');
+
+app.use(express.static(path.join(__dirname, 'public')));
