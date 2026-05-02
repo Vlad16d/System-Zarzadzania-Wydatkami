@@ -50,8 +50,8 @@ router.get('/:userId/:month', (req, res) => {
             // wydatki
             db.get(
                 `SELECT SUM(amount) as total 
-                 FROM Expenses 
-                 WHERE user_id = ? AND substr(date,1,7) = ?`,
+                FROM Expenses 
+                WHERE user_id = ? AND strftime('%Y-%m', date) = ?`,
                 [userId, month],
                 (err, expenseRow) => {
                     if (err) return res.status(500).json({ error: err.message });
