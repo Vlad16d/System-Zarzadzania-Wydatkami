@@ -9,8 +9,8 @@ router.get('/monthly/:userId/:month', (req, res) => {
 
     db.get(
         `SELECT SUM(amount) as total 
-         FROM Expenses 
-         WHERE user_id = ? AND date LIKE ? || '%' = ?`,
+        FROM Expenses 
+        WHERE user_id = ? AND date LIKE ? || '%'`,
         [userId, month],
         (err, row) => {
             if (err) return res.status(500).json({ error: err.message });

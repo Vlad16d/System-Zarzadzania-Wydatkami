@@ -544,17 +544,39 @@ async function loadCategories() {
     });
 }
 
+// async function loadMonthlyStats() {
+//     if (!getUserId()) return;
+
+//     const month = document.getElementById('month').value;
+
+//     const res = await fetch(`/stats/monthly/${getUserId()}/${month}`);
+//     const data = await res.json();
+
+//     document.getElementById('monthlyResult').innerText = `Za miesiąc: ${data.total} zł`;
+
+//     console.log("SELECTED MONTH:", month);
+// }
+
 async function loadMonthlyStats() {
-    if (!getUserId()) return;
+    const userId = getUserId();
+    if (!userId) return;
 
     const month = document.getElementById('month').value;
 
-    const res = await fetch(`/stats/monthly/${getUserId()}/${month}`);
-    const data = await res.json();
-
-    document.getElementById('monthlyResult').innerText = `Za miesiąc: ${data.total} zł`;
+    if (!month) {
+        alert("Wybierz miesiąc");
+        return;
+    }
 
     console.log("SELECTED MONTH:", month);
+
+    const res = await fetch(`/stats/monthly/${userId}/${month}`);
+    const data = await res.json();
+
+    console.log("SERVER RESPONSE:", data);
+
+    document.getElementById('monthlyResult').innerText =
+        `Za miesiąc: ${data.total} zł`;
 }
 
 async function addCategory() {
@@ -689,7 +711,7 @@ function showApp() {
 }
 
 function logout() {
-    userId = null;  
+    userId = null;
     localStorage.removeItem('userId');
     showAuth();
 }
