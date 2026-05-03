@@ -464,6 +464,7 @@ async function loadChart() {
 async function setBudget() {
     if (!getUserId()) return; 
 
+    const month = new Date().toISOString().slice(0, 7);
     const limit = document.getElementById('budget').value;
 
     if (!limit || isNaN(limit) || limit <= 0) {
@@ -476,7 +477,7 @@ async function setBudget() {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             user_id: getUserId(),
-            month: '2026-04',
+            month: month,//'2026-04',
             limit_amount: limit
         })
     });
@@ -487,7 +488,9 @@ async function setBudget() {
 async function loadBudget() {
     if (!getUserId()) return;
 
-    const res = await fetch(`/budget/${getUserId()}/2026-04`);
+    const month = new Date().toISOString().slice(0, 7);
+
+    fetch(`/budget/${getUserId()}/${month}`)
     const data = await res.json();
 
     if (data.remaining === null) {
@@ -495,7 +498,8 @@ async function loadBudget() {
         return;
     }
 
-    let text = `Zostało: ${data.remaining} zł`;
+    document.getElementById('budgetInfo').innerText =
+        `Zostało (${month}): ${data.remaining} zł`;
 
     if (data.exceeded) {
         text += " ⚠️ Budget przekroczony!";
@@ -544,8 +548,9 @@ async function loadMonthlyStats() {
     const res = await fetch(`/stats/monthly/${getUserId()}/${month}`);
     const data = await res.json();
 
-    document.getElementById('monthlyResult').innerText =
-        `Za miesiąc: ${data.total} zł`;
+    document.getElementById('monthlyResult').innerText = `Za miesiąc: ${data.total} zł`;
+
+    console.log("SELECTED MONTH:", month);
 }
 
 async function addCategory() {
