@@ -490,19 +490,23 @@ async function loadBudget() {
 
     const month = new Date().toISOString().slice(0, 7);
 
-    fetch(`/budget/${getUserId()}/${month}`)
+    const res = await fetch(`/budget/${getUserId()}/${month}`);
     const data = await res.json();
+
+    if (!res.ok) {
+        console.log("Budget error");
+        return;
+    }
 
     if (data.remaining === null) {
         document.getElementById('budgetInfo').innerText = '';
         return;
     }
 
-    document.getElementById('budgetInfo').innerText =
-        `Zostało (${month}): ${data.remaining} zł`;
+    let text = `Zostało: ${data.remaining} zł`;
 
     if (data.exceeded) {
-        text += " ⚠️ Budget przekroczony!";
+        text += " ⚠️ Budżet przekroczony!";
         document.getElementById('budgetInfo').style.color = 'red';
     } else {
         document.getElementById('budgetInfo').style.color = 'green';
@@ -655,7 +659,7 @@ async function login() {
     const data = await res.json();
 
     if (!res.ok) {
-        alert(data.error || "Bład wejścia");
+        alert(data.error || "Bład logowania");
         return;
     }
 
@@ -691,8 +695,13 @@ function logout() {
 }
 
 async function afterLogin() {
-    showApp();
-    await refreshAll();
+    document.getElementById('authBlock').style.display = 'none';
+    document.getElementById('appBlock').style.display = 'block';
+
+    await loadCategories();   
+    await loadExpenses();
+    await loadChart();
+    await loadBudget();
 }
 
 async function refreshAll() {
